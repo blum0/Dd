@@ -1,4 +1,4 @@
-name: CI
+name: RDP via Ngrok
 
 on: [push, workflow_dispatch]
 
@@ -18,24 +18,14 @@ jobs:
       env:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
-    - name: Enable RDP & Create User
+    - name: Enable RDP and set password for runneradmin
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-        
-        $userExists = net user admin
-        if ($LASTEXITCODE -ne 0) {
-          net user runneradmin 123123@@ /add
-        }
-        net localgroup administrators | findstr /C:"admin" > nul
-        if ($LASTEXITCODE -ne 0) {
-          net localgroup administrators admin /add
-        }
+        net user runneradmin "P@ssw0rd!"
 
     - name: Start ngrok tunnel
       run: .\ngrok\ngrok.exe tcp 3389
 
-    - name: Keep session alive for 6 hours
+    - name: Keep alive for 6 hours
       run: Start-Sleep -Seconds 21600
-      
